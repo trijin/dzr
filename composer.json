@@ -1,0 +1,23 @@
+{
+    "name": "trijin/dzr"
+    ,"type": "library"
+    ,"description": "dzr - библиотека для парсинга движка dzzzr"
+    ,"version": "0.0.1"
+    ,"keywords": ["DoZoR","parse","Дозор","dzzzr"]
+    ,"homepage": "http://trijin.ru/"
+    ,"license": "MIT"
+    ,"authors": [
+        {
+            "name": "Alex T Trijin"
+            ,"email": "trijin@gmail.com"
+            ,"role": "Developer"
+        }
+    ]
+    ,"require": {
+        "guzzlehttp/guzzle": "~6.0",
+        "electrolinux/phpquery": "^0.9.6"
+    }
+    ,"autoload": {
+        "classmap": [""]
+    }
+}
