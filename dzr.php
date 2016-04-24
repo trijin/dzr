@@ -1,6 +1,4 @@
 <?
-include_once('phpQuery.php');
-
 class dzr {
 	public $session;
 	public $lastCashe='';
@@ -8,34 +6,43 @@ class dzr {
 	public $data;
 	public $city;
 	public $lastLoadTime=0;
+	/**
+	* params must have:
+	* @dzr_login - логин команды от движка
+	* @dzr_pass - пин команды от движка
+	* @dzr_user - array(
+	** (string)cookie_last - serialize cookie
+	** (string)login - логин игрока
+	** (string)pass - пароль игрока
+	** [(function)saveCookie] - функция сохранения кук пользователя ($login, $newCookie)
+	* )
+	* [saveallpages]
+	*/
 	function __construct($param) {
 		$this->param=$param;
 		$login=$this->param['dzr_login'];
-		// var_export($login);
 		if(strpos($login,'_')!==false) {
 			$city=explode('_',$this->param['dzr_login']);
 			$this->city=$city[0];
-			// file_put_contents('out2', 'set city 2 '.$dzt->city.PHP_EOL,FILE_APPEND);
-		} else {
-			// file_put_contents('out2', 'cant set '.$login.PHP_EOL,FILE_APPEND);
 		}
+	}
+	static function cp2utf($mix){
+		if(is_array($mix)) return array_map('dzr::cp2utf', $mix);
+		if(is_string($mix) && !is_numeric($mix)) return iconv("cp1251", "UTF-8", $mix);
+		return $mix;
 	}
 	public function load($url) {
 		if(!empty($this->city)) {
 			$url=str_replace('{city}', $this->city, $url);
-		} else {
-			$city=explode('_',$this->param['dzr_login']);
-			$this->city=$city[0];
-			$url=str_replace('{city}', $this->city, $url);
 		}
-		if(empty($session)) {
+		if(empty($this->session)) {
 			$option=array(
 				'auth'=>array($this->param['dzr_login'],$this->param['dzr_pass']),
 				'redirects'=>3,
 				'redirect_like_browser'=>true,
 				);
-			if($this->param['dzr_user_id']>0 && strlen($this->param->dzr_user['cookie_last'])>10) {
-				$option['cookies']=unserialize($this->param->dzr_user['cookie_last']);
+			if(is_array($this->param['dzr_user']) && strlen($this->param['dzr_user']['cookie_last'])>10) {
+				$option['cookies']=unserialize($this->param->['dzr_user']['cookie_last']);
 			}
 			$this->session = new Requests_Session($url,null,null,$option);
 		}
@@ -43,20 +50,20 @@ class dzr {
 			sleep(1);
 		}
 		$data=$this->session->get($url);
-		if(strpos(cp2utf($data->body),'Авторизуйтесь.')) {
-			echo 'нет авторизации';
+		if(strpos(dzr::cp2utf($data->body),'Авторизуйтесь.')) {
+			// echo 'нет авторизации';
 			sleep(1);
-			if($this->param['dzr_user_id']>0 && strlen($this->param->dzr_user['login'])>0) {
-				$post=array('notags'=>'on','action'=>'auth','login'=>(string)$this->param->dzr_user['login'],'password'=>(string)$this->param->dzr_user['pass']);
+			if(is_array($this->param['dzr_user']) && strlen($this->param['dzr_user']['login'])>0 && strlen($this->param['dzr_user']['pass'])>0) {
+				$post=array('notags'=>'on','action'=>'auth','login'=>(string)$this->param['dzr_user']['login'],'password'=>(string)$this->param['dzr_user']['pass']);
 				$data=$this->session->post($url,null,$post);
 			}
 		}
 		$lastLoadTime=time();
-		if(serialize($data->cookies->get())!==$this->param->dzr_user['cookie_last']) {
-			$this->param->dzr_user->update(array('cookie_last'=>serialize($data->cookies->get())));
+		if(serialize($data->cookies->get())!==$this->param['dzr_user']['cookie_last'] && is_callable($this->param['dzr_user']['saveCookie'])) {
+			$this->param['dzr_user']['saveCookie']($this->param['dzr_user']['login'],serialize($data->cookies->get()));
 		}
 		$this->lastCashe=$data;
-		$this->saveToLogs($this->param['dzr_login'].':'.$this->param['dzr_pass'].' > '.$url);
+		if(isset($this->param['saveallpages']) && $this->param['saveallpages']) $this->saveToLogs($this->param['dzr_login'].':'.$this->param['dzr_pass'].' > '.$url);
 		return $data;
 
 	}
@@ -95,7 +102,7 @@ class dzr {
 			'cod'=>$code,
 			'action'=>'entcod',
 			));
-		if(strpos(cp2utf($data->body),'Авторизуйтесь.')) {
+		if(strpos(dzr::cp2utf($data->body),'Авторизуйтесь.')) {
 			echo 'нет авторизации';
 			sleep(1);
 			if($this->param['dzr_user_id']>0 && strlen($this->param->dzr_user['login'])>0 && !$second) {
@@ -112,12 +119,12 @@ class dzr {
 			$this->param->dzr_user->update(array('cookie_last'=>serialize($data->cookies->get())));
 		}
 		$this->lastCashe=$data;
-		$this->saveToLogs($this->param['dzr_login'].':'.$this->param['dzr_pass'].' > '.$url);
+		if(isset($this->param['saveallpages']) && $this->param['saveallpages']) $this->saveToLogs($this->param['dzr_login'].':'.$this->param['dzr_pass'].' > '.$url);
 		return $data;
 
 	}
 	function saveToLogs($pre) {
-		file_put_contents('pagelogs/'.time().'.html',$pre."\n".$this->lastCashe->body);
+		file_put_contents($this->param['saveallpages'].'/'.time().'.html',$pre."\n".$this->lastCashe->body);
 		
 	}
 	function parse($html) {

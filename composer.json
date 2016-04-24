@@ -1,9 +1,9 @@
 {
     "name": "trijin/dzr"
     ,"type": "library"
-    ,"description": "dzr - библиотека для парсинга движка dzzzr"
+    ,"description": "dzr - Р±РёР±Р»РёРѕС‚РµРєР° РґР»СЏ РїР°СЂСЃРёРЅРіР° РґРІРёР¶РєР° dzzzr"
     ,"version": "0.0.1"
-    ,"keywords": ["DoZoR","parse","Дозор","dzzzr"]
+    ,"keywords": ["DoZoR","parse","Р”РѕР·РѕСЂ","dzzzr"]
     ,"homepage": "http://trijin.ru/"
     ,"license": "MIT"
     ,"authors": [
